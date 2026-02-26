@@ -1,0 +1,38 @@
+```yaml
+   name: Upload Daily Notes
+
+   on:
+     schedule:
+       - cron: '0 0 * * *'  # Runs every day at 00:00 UTC
+     workflow_dispatch:
+
+   jobs:
+     upload:
+       runs-on: ubuntu-latest
+
+       steps:
+       - name: Checkout repository
+         uses: actions/checkout@v3
+
+       - name: Configure Git
+         run: |
+           git config --global user.email "actions@github.com"
+           git config --global user.name "GitHub Actions"
+
+       - name: Add notes
+         run: |
+           mkdir -p github_export
+           # Copy new notes here, assuming they are generated elsewhere
+           cp literature/notes/*.md github_export/
+           echo "Copied notes placeholder" > github_export/README.md
+       - name: Commit changes
+         run: |
+           git add github_export/*
+           git commit -m "Add daily notes"
+
+       - name: Push changes
+         uses: ad-m/github-push-action@master
+         with:
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           branch: ${{ github.ref }}
+ ```
