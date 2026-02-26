@@ -24,7 +24,6 @@
            mkdir -p github_export
            # Copy new notes here, assuming they are generated elsewhere
            cp literature/notes/*.md github_export/
-           echo "Copied notes placeholder" > github_export/README.md
        - name: Commit changes
          run: |
            git add github_export/*
