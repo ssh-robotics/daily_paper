@@ -1,37 +1,42 @@
-```yaml
-   name: Upload Daily Notes
+name: Upload Daily Notes
 
-   on:
-     schedule:
-       - cron: '0 0 * * *'  # Runs every day at 00:00 UTC
-     workflow_dispatch:
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 时间 00:00 运行
+  workflow_dispatch:
 
-   jobs:
-     upload:
-       runs-on: ubuntu-latest
+# 必须声明写权限，否则 push 会被拒绝
+permissions:
+  contents: write
 
-       steps:
-       - name: Checkout repository
-         uses: actions/checkout@v3
+jobs:
+  upload:
+    runs-on: ubuntu-latest
 
-       - name: Configure Git
-         run: |
-           git config --global user.email "actions@github.com"
-           git config --global user.name "GitHub Actions"
+    steps:
+    # 更新到 v4 版本
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-       - name: Add notes
-         run: |
-           mkdir -p github_export
-           # Copy new notes here, assuming they are generated elsewhere
-           cp literature/notes/*.md github_export/
-       - name: Commit changes
-         run: |
-           git add github_export/*
-           git commit -m "Add daily notes"
+    - name: Configure Git
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
 
-       - name: Push changes
-         uses: ad-m/github-push-action@master
-         with:
-           github_token: ${{ secrets.GITHUB_TOKEN }}
-           branch: ${{ github.ref }}
- ```
+    - name: Add notes
+      run: |
+        mkdir -p github_export
+        # 添加容错：如果没有匹配的文件，抑制错误信息并继续执行
+        cp literature/notes/*.md github_export/ 2>/dev/null || true
+
+    - name: Commit and Push changes
+      run: |
+        git add github_export/
+        
+        # 检查 Git 状态，只有在检测到有文件发生改变时，才执行 commit 和 push
+        if [ -n "$(git status --porcelain)" ]; then
+          git commit -m "Add daily notes"
+          git push
+        else
+          echo "今天没有新的笔记需要提交 (No changes to commit)."
+        fi
